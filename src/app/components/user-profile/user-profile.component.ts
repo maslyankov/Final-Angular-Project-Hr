@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FirestoreService } from '../../firestore/firestore.service';
 import { AuthService } from '../../auth/auth.service';
 import { collectionTypes } from '../../models/collection-types.enum';
-import { Observable } from 'rxjs';
+import { Observable, combineLatest, map, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -15,13 +15,13 @@ import { MatButtonModule } from '@angular/material/button';
   standalone: true,
   imports: [CommonModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatButtonModule],
   templateUrl: './user-profile.component.html',
-  styleUrls: ['./user-profile.component.scss'], // Corrected from `styleUrl` to `styleUrls`
+  styleUrls: ['./user-profile.component.scss'],
 })
 export class UserProfileComponent {
   userId: string = '';
-  posts$: Observable<any[]> = new Observable<any[]>(); // Correct type for `posts$`
-  editState: { [key: string]: boolean } = {}; // Track edit state per post
-  editForms: { [key: string]: FormGroup } = {}; // Track edit forms per post
+  posts$: Observable<any[]> = of([]);
+  editState: { [key: string]: boolean } = {};
+  editForms: { [key: string]: FormGroup } = {};
 
   constructor(
     private firestoreService: FirestoreService,
@@ -33,51 +33,49 @@ export class UserProfileComponent {
     this.authService.getCurrentUser().subscribe((user) => {
       if (user) {
         this.userId = user.uid;
-        this.posts$ = this.firestoreService.getAllPostsByUser(
-          collectionTypes.MomsCollection,
-          this.userId
+        const streams = Object.values(collectionTypes).map((collection) =>
+          this.firestoreService
+            .getAllPostsByUser(collection, this.userId)
+            .pipe(map((posts) => posts.map((p) => ({ ...p, collection }))))
+        );
+        this.posts$ = combineLatest(streams).pipe(
+          map((arrays) => arrays.flat())
         );
       }
     });
   }
 
   toggleEditState(postId: string, currentTitle: string, currentBody: string) {
-     
-      // Check if toggling off edit mode
-      if (this.editState[postId]) {
-        // If form exists, reset to original values
-        if (this.editForms[postId]) {
-          this.editForms[postId].setValue({
-            title: currentTitle,
-            body: currentBody,
-          });
-        }
-      } else {
-        // If toggling on edit mode, initialize form
-        if (!this.editForms[postId]) {
-          this.editForms[postId] = this.fb.group({
-            title: [currentTitle, [Validators.required, Validators.minLength(5)]],
-            body: [currentBody, [Validators.required, Validators.minLength(10)]],
-          });
-        }
+    if (this.editState[postId]) {
+      if (this.editForms[postId]) {
+        this.editForms[postId].setValue({
+          title: currentTitle,
+          body: currentBody,
+        });
       }
-    
-      // Toggle the edit state
-      this.editState[postId] = !this.editState[postId];
+    } else {
+      if (!this.editForms[postId]) {
+        this.editForms[postId] = this.fb.group({
+          title: [currentTitle, [Validators.required, Validators.minLength(5)]],
+          body: [currentBody, [Validators.required, Validators.minLength(10)]],
+        });
+      }
     }
-      
 
-  updatePost(postId: string) {
-    const form = this.editForms[postId];
+    this.editState[postId] = !this.editState[postId];
+  }
+
+  updatePost(post: any) {
+    const form = this.editForms[post.id];
     if (form && form.valid) {
       const updatedData = {
         title: form.value.title,
         body: form.value.body,
       };
       this.firestoreService
-        .updatePost(collectionTypes.MomsCollection, postId, updatedData)
+        .updatePost(post.collection, post.id, updatedData)
         .then(() => {
-          this.editState[postId] = false;
+          this.editState[post.id] = false;
           alert('Post updated successfully!');
         })
         .catch((error) => {
@@ -89,10 +87,10 @@ export class UserProfileComponent {
     }
   }
 
-  deletePost(postId: string) {
+  deletePost(post: any) {
     if (confirm('Are you sure you want to delete this post?')) {
       this.firestoreService
-        .deletePost(collectionTypes.MomsCollection, postId)
+        .deletePost(post.collection, post.id)
         .then(() => {
           alert('Post deleted successfully!');
         })
@@ -102,5 +100,4 @@ export class UserProfileComponent {
         });
     }
   }
-  
 }

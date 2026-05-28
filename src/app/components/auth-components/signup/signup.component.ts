@@ -10,7 +10,7 @@ import {
   ValidationErrors,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { FirebaseAuthError } from '../../../models/authErrorModel';
+import { AuthError } from '../../../models/authErrorModel';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -69,7 +69,7 @@ export class SignupComponent {
           this.emailError = ''; // Clear any existing error
           this.router.navigate(['/']); // Redirect to the home route
         },
-        error: (error: FirebaseAuthError) => {
+        error: (error: AuthError) => {
           console.log(error);
           if (error.code === 'auth/email-already-in-use') {
             this.emailError = 'This email is already used.';
@@ -82,7 +82,7 @@ export class SignupComponent {
   }
 
   hasPasswordMismatch(): boolean {
-    return (
+    return !!(
       this.signUpForm.errors?.['passwordsMismatch'] &&
       this.signUpForm.get('confirmPassword')?.touched
     );

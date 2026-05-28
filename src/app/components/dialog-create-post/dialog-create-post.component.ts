@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { collectionTypes } from '../../models/collection-types.enum';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -38,7 +38,8 @@ export class DialogCreatePostComponent {
   constructor(
     private firestoreService: FirestoreService,
     private fb: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private dialogRef: MatDialogRef<DialogCreatePostComponent>
   ) {
     this.data = inject(MAT_DIALOG_DATA);
 
@@ -56,19 +57,24 @@ export class DialogCreatePostComponent {
     });
   }
 
-  createPost() {
+  async createPost() {
     if (this.myForm.invalid) {
       console.log('Error: Form is invalid');
-      
-      return; // Prevent submission if the form is invalid
-    } 
+      return;
+    }
 
     const { title, body } = this.myForm.value;
-    this.firestoreService.createNewPost(
-      title, 
-      body, 
-      this.data.method, 
-      this.userId);
+    try {
+      await this.firestoreService.createNewPost(
+        title,
+        body,
+        this.data.method,
+        this.userId
+      );
+      this.dialogRef.close(true);
+    } catch (err) {
+      console.error('Error creating post:', err);
+    }
   }
 }
 

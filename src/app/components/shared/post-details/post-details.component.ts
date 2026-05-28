@@ -42,9 +42,12 @@ export class PostDetailsComponent {
       await this.firestoreService
         .getPostByUserId(collectionType, heroId)
         .then((post) => {
-          console.log('Post:', post);
-
-          this.post = post;
+          if (!post) return;
+          this.post = {
+            ...post,
+            likes: post.likes ?? [],
+            likesLength: post.likes?.length ?? 0,
+          };
         })
         .catch((error: any) => {
           console.error('Error fetching post:', error);

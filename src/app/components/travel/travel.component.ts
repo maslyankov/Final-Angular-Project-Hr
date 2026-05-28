@@ -49,20 +49,21 @@ export class TravelComponent {
   userId: string = '';
 
   openDialog() {
-    this.dialog.open(DialogCreatePostComponent, {
+    const ref = this.dialog.open(DialogCreatePostComponent, {
       data: {
         method: collectionTypes.TravelCollection,
       },
     });
+    ref.afterClosed().subscribe((created) => {
+      if (created) this.refreshPosts();
+    });
   }
   
   ngOnInit() {
+    this.refreshPosts();
     this.authService.getCurrentUser().subscribe({
       next: (user) => {
-        if (user) {
-          this.userId = user.uid; // Save the current user's ID
-          this.refreshPosts();
-        }
+        this.userId = user?.uid ?? '';
       },
     });
   }

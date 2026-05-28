@@ -8,7 +8,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { FirebaseAuthError } from '../../../models/authErrorModel';
+import { AuthError } from '../../../models/authErrorModel';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
@@ -56,7 +56,7 @@ export class LoginComponent {
           this.passwordError = '';
           this.router.navigate(['/']); // Redirect to the home route
         },
-        error: (error: FirebaseAuthError) => {
+        error: (error: AuthError) => {
           if (error.code === 'auth/user-not-found') {
             this.emailError = 'No user exists with this email.';
           } else if (error.code === 'auth/invalid-credential') {

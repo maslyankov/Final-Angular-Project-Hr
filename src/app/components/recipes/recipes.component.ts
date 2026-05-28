@@ -48,10 +48,13 @@ export class RecipesComponent {
   userId: string = '';
 
   openDialog() {
-    this.dialog.open(DialogCreatePostComponent, {
+    const ref = this.dialog.open(DialogCreatePostComponent, {
       data: {
         method: collectionTypes.RecipesCollection,
       },
+    });
+    ref.afterClosed().subscribe((created) => {
+      if (created) this.refreshPosts();
     });
   }
 
@@ -61,12 +64,10 @@ export class RecipesComponent {
   // }
 
   ngOnInit() {
+    this.refreshPosts();
     this.authService.getCurrentUser().subscribe({
       next: (user) => {
-        if (user) {
-          this.userId = user.uid; // Save the current user's ID
-          this.refreshPosts();
-        }
+        this.userId = user?.uid ?? '';
       },
     });
   }

@@ -3,7 +3,7 @@
     <div *ngFor="let post of posts" class="post-card">
       <ng-container *ngIf="editState[post.id]; else viewMode">
         <!-- Edit Mode -->
-        <form [formGroup]="editForms[post.id]" (ngSubmit)="updatePost(post.id)">
+        <form [formGroup]="editForms[post.id]" (ngSubmit)="updatePost(post)">
           <mat-form-field appearance="fill">
             <mat-label>Title</mat-label>
             <input matInput formControlName="title" />
@@ -33,13 +33,13 @@
         </form>
       </ng-container>
       <ng-template #viewMode>
-        
+
         <!-- View Mode -->
-        <p>User: {{ post.userId }}</p>
+        <p>Category: {{ post.collection }}</p>
         <h3>{{ post.title }}</h3>
         <p>{{ post.body }}</p>
         <button class="action-btn" mat-button (click)="toggleEditState(post.id, post.title, post.body)">Edit</button>
-        <button class="action-btn" mat-button (click)="deletePost(post.id)">Delete</button>
+        <button class="action-btn" mat-button (click)="deletePost(post)">Delete</button>
       </ng-template>
     </div>
   </div>
